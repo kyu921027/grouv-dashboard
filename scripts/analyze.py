@@ -202,10 +202,10 @@ tbody td{{padding:8px 10px}}
     <div class="h180"><canvas id="donutChart"></canvas></div>
     <div style="margin-top:12px;font-size:12px">
       <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-        <span>🟣 고정(인건비포함)</span><strong>{fmt(f1['fixed'])} ({f1['fixed']/f1_te*100:.0f}%)</strong>
+        <span>🟣 고정(인건비포함)</span><strong>{fmt(f1['fixed'])} ({(f1['fixed']/f1_te*100) if f1_te else 0:.0f}%)</strong>
       </div>
       <div style="display:flex;justify-content:space-between">
-        <span>🟠 변동</span><strong>{fmt(f1['variable'])} ({f1['variable']/f1_te*100:.0f}%)</strong>
+        <span>🟠 변동</span><strong>{fmt(f1['variable'])} ({(f1['variable']/f1_te*100) if f1_te else 0:.0f}%)</strong>
       </div>
     </div>
   </div>
