@@ -77,7 +77,7 @@ try:
   for k in ('data','items','tickets','result'):
     if k in d and isinstance(d[k], list): sys.exit(0)
   sys.exit(1)
-except: sys.exit(1)
+except Exception: sys.exit(1)
 "
 }
 
