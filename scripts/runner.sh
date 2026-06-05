@@ -2,7 +2,7 @@
 # Grouv Daily Dashboard Runner
 # Credentials read from /tmp/grouv_creds.env
 
-set -e
+set -eo pipefail
 source /tmp/grouv_creds.env
 
 echo "=== STEP 1: Calculate dates ==="
@@ -18,7 +18,7 @@ ps = date(pe.year, pe.month, 1)
 ppe = date(ps.year, ps.month, 1) - timedelta(days=1)
 pps = date(ppe.year, ppe.month, 1)
 ts = date(today.year, today.month, 1)
-open('/tmp/dates.txt','w').write('|'.join(str(x) for x in [today_str,ws,we,ps,pe,pps,ppe,ts]))
+open('/tmp/dates.txt','w').write('|'.join(str(x) for x in [today_str,ws,we,ps,pe,pps,ppe,ts]) + '\n')
 print('dates saved')
 "
 
@@ -30,12 +30,16 @@ echo "=== STEP 2: Collect Granter data ==="
 collect_granter_cli() {
   export NVM_DIR="$HOME/.nvm"
   [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" || true
+  # Refresh PATH to pick up newly installed granter
+  export PATH="$NVM_DIR/versions/node/$(node -v 2>/dev/null | tr -d v)/bin:$PATH"
   npm install -g @granter-biz/cli 2>/dev/null || true
-  granter config --api-key "$GRANTER_KEY" 2>/dev/null || return 1
-  granter tickets --type BANK_TRANSACTION_TICKET --from "$PREV_START" --to "$PREV_END" > /tmp/prev_tickets.json 2>/dev/null || return 1
-  granter tickets --type BANK_TRANSACTION_TICKET --from "$PP_START" --to "$PP_END" > /tmp/pp_tickets.json 2>/dev/null || return 1
-  granter tickets --type BANK_TRANSACTION_TICKET --from "$THIS_START" --to "$TODAY" > /tmp/this_tickets.json 2>/dev/null || return 1
-  granter assets --type BANK_ACCOUNT > /tmp/assets.json 2>/dev/null || return 1
+  GRANTER_BIN=$(which granter 2>/dev/null || find "$NVM_DIR" -name granter -type f 2>/dev/null | head -1)
+  [ -z "$GRANTER_BIN" ] && return 1
+  "$GRANTER_BIN" config --api-key "$GRANTER_KEY" 2>/dev/null || return 1
+  "$GRANTER_BIN" tickets --type BANK_TRANSACTION_TICKET --from "$PREV_START" --to "$PREV_END" > /tmp/prev_tickets.json 2>/dev/null || return 1
+  "$GRANTER_BIN" tickets --type BANK_TRANSACTION_TICKET --from "$PP_START" --to "$PP_END" > /tmp/pp_tickets.json 2>/dev/null || return 1
+  "$GRANTER_BIN" tickets --type BANK_TRANSACTION_TICKET --from "$THIS_START" --to "$TODAY" > /tmp/this_tickets.json 2>/dev/null || return 1
+  "$GRANTER_BIN" assets --type BANK_ACCOUNT > /tmp/assets.json 2>/dev/null || return 1
 }
 
 collect_npx() {
