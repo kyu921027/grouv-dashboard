@@ -30,10 +30,18 @@ echo "=== STEP 2: Collect Granter data ==="
 collect_granter_cli() {
   export NVM_DIR="$HOME/.nvm"
   [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" || true
-  # Refresh PATH to pick up newly installed granter
-  export PATH="$NVM_DIR/versions/node/$(node -v 2>/dev/null | tr -d v)/bin:$PATH"
-  npm install -g @granter-biz/cli 2>/dev/null || true
-  GRANTER_BIN=$(which granter 2>/dev/null || find "$NVM_DIR" -name granter -type f 2>/dev/null | head -1)
+  # Find granter binary by scanning all node version bin dirs
+  GRANTER_BIN=""
+  for _dir in "$NVM_DIR/versions/node"/*/bin; do
+    if [ -x "$_dir/granter" ]; then GRANTER_BIN="$_dir/granter"; break; fi
+  done
+  # If not found, try installing then re-scan
+  if [ -z "$GRANTER_BIN" ]; then
+    npm install -g @granter-biz/cli 2>/dev/null || true
+    for _dir in "$NVM_DIR/versions/node"/*/bin; do
+      if [ -x "$_dir/granter" ]; then GRANTER_BIN="$_dir/granter"; break; fi
+    done
+  fi
   [ -z "$GRANTER_BIN" ] && return 1
   "$GRANTER_BIN" config --api-key "$GRANTER_KEY" 2>/dev/null || return 1
   "$GRANTER_BIN" tickets --type BANK_TRANSACTION_TICKET --from "$PREV_START" --to "$PREV_END" > /tmp/prev_tickets.json 2>/dev/null || return 1
