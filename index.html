@@ -1,671 +1,82 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>지출·매출 예측 대시보드</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #f8fafc;
-      color: #0f172a;
-      padding: 40px 48px;
-      min-height: 100vh;
-    }
-
-    /* ── 헤더 ── */
-    .page-header { margin-bottom: 28px; }
-    .page-header h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
-    .page-header p  { font-size: 13px; color: #64748b; margin-top: 6px; }
-    .badges { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-    .badge {
-      padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
-      display: inline-flex; align-items: center; gap: 4px;
-    }
-    .badge::before { content:''; width:5px; height:5px; border-radius:50%; }
-    .badge.actual  { background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0; }
-    .badge.actual::before { background:#22c55e; }
-    .badge.forecast{ background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; }
-    .badge.forecast::before { background:#3b82f6; animation:pulse 1.5s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
-
-    /* ── 그리드 ── */
-    .grid { display: grid; gap: 16px; }
-    .g4 { grid-template-columns: repeat(4,1fr); }
-    .g2 { grid-template-columns: repeat(2,1fr); }
-    .g31{ grid-template-columns: 2fr 1fr; }
-    .g13{ grid-template-columns: 1fr 2fr; }
-    .g3 { grid-template-columns: repeat(3,1fr); }
-
-    /* ── 카드 ── */
-    .card {
-      background: #fff;
-      border: 1px solid #e2e8f0;
-      border-radius: 18px;
-      padding: 22px 24px;
-      box-shadow: 0 1px 3px rgba(0,0,0,.05);
-    }
-
-    /* ── KPI ── */
-    .kpi-lbl { font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px; }
-    .kpi-val { font-size:28px; font-weight:800; letter-spacing:-1px; }
-    .kpi-sub { font-size:12px; color:#94a3b8; margin-top:5px; }
-    .kpi-tag { display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:600; margin-right:4px; }
-    .up  { background:#f0fdf4; color:#16a34a; }
-    .dn  { background:#fef2f2; color:#ef4444; }
-    .nu  { background:#eff6ff; color:#2563eb; }
-    .warn{ background:#fffbeb; color:#d97706; }
-
-    /* ── 섹션 타이틀 ── */
-    .stitle {
-      font-size:14px; font-weight:700; color:#0f172a;
-      display:flex; align-items:center; justify-content:space-between;
-      margin-bottom: 4px;
-    }
-    .ssubtitle { font-size:12px; color:#94a3b8; margin-bottom:18px; }
-    .chip { font-size:11px; padding:3px 10px; border-radius:20px; background:#f1f5f9; color:#64748b; font-weight:500; }
-    .chip.blue { background:#eff6ff; color:#2563eb; }
-    .chip.green{ background:#f0fdf4; color:#16a34a; }
-    .chip.warn { background:#fffbeb; color:#d97706; }
-
-    /* ── 차트 ── */
-    .chart-wrap { position:relative; }
-    .h300 { height:300px; }
-    .h220 { height:220px; }
-    .h180 { height:180px; }
-
-    /* ── 상세 행 ── */
-    .detail-row {
-      display:flex; align-items:center; gap:10px;
-      padding: 10px 0;
-      border-bottom: 1px solid #f1f5f9;
-    }
-    .detail-row:last-child { border-bottom:none; padding-bottom:0; }
-    .dot12 { width:10px; height:10px; border-radius:3px; flex-shrink:0; }
-    .dr-name { flex:1; font-size:13px; color:#374151; }
-    .dr-bar-wrap { width:90px; background:#f1f5f9; border-radius:4px; height:5px; }
-    .dr-bar     { height:5px; border-radius:4px; }
-    .dr-amount  { font-size:13px; font-weight:700; white-space:nowrap; text-align:right; min-width:72px; }
-    .dr-ratio   { font-size:11px; color:#94a3b8; white-space:nowrap; min-width:36px; text-align:right; }
-    .dr-badge   { font-size:10px; padding:2px 7px; border-radius:8px; white-space:nowrap; }
-    .fc-tag     { background:#eff6ff; color:#3b82f6; font-size:10px; padding:1px 6px; border-radius:6px; }
-
-    /* ── 월별 탭 요약 ── */
-    .month-tabs { display:flex; gap:6px; margin-bottom:18px; }
-    .month-tab {
-      padding:6px 16px; border-radius:20px; font-size:12px; font-weight:600;
-      cursor:pointer; border: 1px solid #e2e8f0; background:#f8fafc; color:#64748b;
-      transition:.15s;
-    }
-    .month-tab.active { background:#2563eb; color:#fff; border-color:#2563eb; }
-    .month-tab.forecast{ border-style:dashed; }
-
-    /* ── 수익 비교 표 ── */
-    table { width:100%; border-collapse:collapse; font-size:12.5px; }
-    thead th { padding:8px 10px; font-size:11px; font-weight:600; color:#94a3b8; text-align:left; border-bottom:1px solid #f1f5f9; text-transform:uppercase; letter-spacing:.04em; }
-    thead th.r { text-align:right; }
-    tbody tr { border-bottom:1px solid #f8fafc; }
-    tbody tr:last-child { border:none; }
-    tbody tr.total { background:#f8fafc; font-weight:700; border-radius:8px; }
-    tbody tr.fc td { color:#94a3b8; }
-    tbody td { padding:9px 10px; }
-    tbody td.in  { color:#2563eb; font-weight:600; text-align:right; }
-    tbody td.out { color:#ef4444; font-weight:600; text-align:right; }
-    tbody td.pos { color:#16a34a; font-weight:700; text-align:right; }
-    tbody td.neg { color:#ef4444; font-weight:700; text-align:right; }
-    tbody td.r   { text-align:right; }
-    .month-tag { display:inline-block; font-size:9px; padding:1px 5px; border-radius:4px; margin-left:4px; vertical-align:middle; }
-    .act-tag  { background:#f0fdf4; color:#16a34a; }
-    .fore-tag { background:#eff6ff; color:#3b82f6; }
-
-    @media(max-width:960px) {
-      .g4 { grid-template-columns:repeat(2,1fr); }
-      .g31,.g13,.g3 { grid-template-columns:1fr; }
-      body { padding:24px 20px; }
-    }
-  </style>
-</head>
-<body>
-
-<!-- ── 헤더 ── -->
-<div class="page-header">
-  <h1>지출·매출 예측 대시보드</h1>
-  <p>5월 실측 기반 고정/변동 지출 분류 · 4~5월 매출 추이를 반영한 6~7월 예측</p>
-  <div class="badges">
-    <span class="badge actual">4월 실측</span>
-    <span class="badge actual">5월 실측</span>
-    <span class="badge forecast">6월 예측</span>
-    <span class="badge forecast">7월 예측</span>
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"/><title>캐시플로우 대시보드 2026-06-05</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8fafc;color:#0f172a;padding:32px 40px}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:20px 24px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.grid{display:grid;gap:14px}.g4{grid-template-columns:repeat(4,1fr)}.g31{grid-template-columns:2fr 1fr}.g2{grid-template-columns:1fr 1fr}
+h1{font-size:22px;font-weight:800}
+.lbl{font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.val{font-size:24px;font-weight:800;letter-spacing:-1px}
+.sub{font-size:12px;color:#94a3b8;margin-top:4px}
+.stitle{font-size:13px;font-weight:700;margin-bottom:12px}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px;margin-right:6px}
+.actual{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.forecast{background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe}
+.h280{height:280px;position:relative}.h180{height:180px;position:relative}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{padding:8px 10px;font-size:11px;font-weight:600;color:#94a3b8;text-align:left;border-bottom:1px solid #f1f5f9;text-transform:uppercase}
+tbody tr{border-bottom:1px solid #f8fafc}
+tbody td{padding:8px 10px}
+.in{color:#2563eb;font-weight:600;text-align:right}
+.out{color:#ef4444;font-weight:600;text-align:right}
+.ttl{background:#f8fafc;font-weight:700}
+</style></head><body>
+<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+  <span style="font-size:20px">⚠️</span>
+  <div><strong style="color:#dc2626">API 데이터 조회 실패</strong><br>
+  <span style="font-size:12px;color:#64748b">Granter API에서 403 오류 반환 (Host not in allowlist). 실제 데이터가 반영되지 않았습니다. Granter 설정에서 현재 서버 IP를 화이트리스트에 추가해주세요.</span></div>
+</div>
+<div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px">
+  <div><h1>그로우 자금일보</h1><p style="font-size:13px;color:#64748b;margin-top:4px">업데이트: 2026-06-05 | <a href="https://kyu921027.github.io/grouv-dashboard/" style="color:#2563eb">GitHub Pages</a></p></div>
+  <div style="text-align:right"><div style="font-size:11px;color:#94a3b8;margin-bottom:2px">현재 잔액</div><div style="font-size:22px;font-weight:800;color:#94a3b8">조회불가</div></div>
+</div>
+<div><span class="badge actual">04월 실측</span><span class="badge actual">05월 실측</span><span class="badge forecast">06월 예측</span><span class="badge forecast">07월 예측</span></div>
+<div style="margin-top:16px"></div>
+<div class="grid g4" style="margin-bottom:14px">
+  <div class="card"><div class="lbl">05월 매출</div><div class="val" style="color:#94a3b8">조회불가</div><div class="sub">API 오류</div></div>
+  <div class="card"><div class="lbl">05월 지출</div><div class="val" style="color:#94a3b8">조회불가</div><div class="sub">API 오류</div></div>
+  <div class="card"><div class="lbl">05월 순이익</div><div class="val" style="color:#94a3b8">조회불가</div><div class="sub">API 오류</div></div>
+  <div class="card"><div class="lbl">06월 예측 순이익</div><div class="val" style="color:#94a3b8">계산불가</div><div class="sub">데이터 없음</div></div>
+</div>
+<div class="grid g2" style="margin-bottom:14px">
+  <div class="card">
+    <div class="stitle">이번주 납부 예정 고정지출 (6/1 ~ 6/7)</div>
+    <table><thead><tr><th>일자</th><th>항목</th><th style="text-align:right">금액</th></tr></thead>
+    <tbody><tr><td>6일</td><td>기장료(세무법인다성)</td><td style="text-align:right;color:#ef4444;font-weight:700">220,000원</td></tr></tbody></table>
+  </div>
+  <div class="card">
+    <div class="stitle">계좌 잔액 현황</div>
+    <div style="color:#ef4444;font-size:12px">⚠️ API 접근 오류 - 잔액 조회 불가<br><span style="color:#94a3b8">Granter API 호스트 화이트리스트 미등록</span></div>
+    <div style="margin-top:8px;padding-top:8px;border-top:2px solid #e2e8f0;display:flex;justify-content:space-between"><strong>총계</strong><strong style="color:#94a3b8">조회불가</strong></div>
   </div>
 </div>
-
-<!-- ── KPI ── -->
-<div class="grid g4" style="margin-bottom:16px;">
+<div class="grid g31" style="margin-bottom:14px">
   <div class="card">
-    <div class="kpi-lbl">5월 총 매출</div>
-    <div class="kpi-val" style="color:#2563eb;">1.82억</div>
-    <div class="kpi-sub"><span class="kpi-tag dn">▼17%</span>4월 대비</div>
+    <div class="stitle">월별 매출 vs 지출 (4개월) — 데이터 없음</div>
+    <div class="h280" style="display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:13px">API 접근 오류로 차트 표시 불가</div>
   </div>
   <div class="card">
-    <div class="kpi-lbl">5월 총 지출</div>
-    <div class="kpi-val" style="color:#ef4444;">1.45억</div>
-    <div class="kpi-sub">
-      <span class="kpi-tag nu">고정 799만</span>
-      <span class="kpi-tag warn">인건비 1,445만</span>
-    </div>
-  </div>
-  <div class="card">
-    <div class="kpi-lbl">5월 영업 순이익</div>
-    <div class="kpi-val" style="color:#16a34a;">+3,670만</div>
-    <div class="kpi-sub"><span class="kpi-tag up">▲ 흑자 전환</span>4월 대비 개선</div>
-  </div>
-  <div class="card">
-    <div class="kpi-lbl">6월 예측 순이익</div>
-    <div class="kpi-val" style="color:#f59e0b;">+2,013만</div>
-    <div class="kpi-sub"><span class="kpi-tag warn">매출 감소 추세 반영</span></div>
+    <div class="stitle">지출 구성비 (05월)</div>
+    <div class="h180" style="display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:13px">데이터 없음</div>
   </div>
 </div>
-
-<!-- ── 메인 차트 + 지출 구성 ── -->
-<div class="grid g31" style="margin-bottom:16px;">
-
-  <!-- 월별 매출·지출 스택 바 -->
-  <div class="card">
-    <div class="stitle">월별 매출 vs 지출 구성 <span class="chip blue">4월~7월</span></div>
-    <div class="ssubtitle">5월까지 실측, 6~7월은 추세 기반 예측 · 지출은 고정/인건비/변동으로 구분</div>
-    <div class="chart-wrap h300">
-      <canvas id="mainChart"></canvas>
-    </div>
-  </div>
-
-  <!-- 5월 지출 비율 도넛 -->
-  <div class="card">
-    <div class="stitle">5월 지출 구성비 <span class="chip green">실측</span></div>
-    <div class="ssubtitle">총 1억 4,579만원</div>
-    <div class="chart-wrap h180">
-      <canvas id="donutChart"></canvas>
-    </div>
-    <div style="margin-top:16px; display:flex; flex-direction:column; gap:8px;">
-      <div style="display:flex; align-items:center; justify-content:space-between; font-size:12px;">
-        <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:3px;background:#6366f1;display:inline-block;"></span>고정 지출</span>
-        <span style="font-weight:700;">799만 <span style="color:#94a3b8;font-weight:400;">5.5%</span></span>
-      </div>
-      <div style="display:flex; align-items:center; justify-content:space-between; font-size:12px;">
-        <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:3px;background:#8b5cf6;display:inline-block;"></span>인건비</span>
-        <span style="font-weight:700;">1,445만 <span style="color:#94a3b8;font-weight:400;">9.9%</span></span>
-      </div>
-      <div style="display:flex; align-items:center; justify-content:space-between; font-size:12px;">
-        <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:3px;background:#f97316;display:inline-block;"></span>변동 지출</span>
-        <span style="font-weight:700;">1억 2,335만 <span style="color:#94a3b8;font-weight:400;">84.6%</span></span>
-      </div>
-    </div>
-  </div>
+<div class="card" style="margin-bottom:14px">
+  <div class="stitle">손익 종합 (4개월)</div>
+  <table><thead><tr><th>항목</th><th style="text-align:right">04월(실측)</th><th style="text-align:right">05월(실측)</th><th style="text-align:right">06월(예측)</th><th style="text-align:right">07월(예측)</th></tr></thead>
+  <tbody>
+    <tr><td>매출 합계</td><td class="in" colspan="4" style="text-align:center;color:#94a3b8">API 오류로 데이터 없음</td></tr>
+  </tbody></table>
 </div>
-
-<!-- ── 고정/변동 상세 + 매출 상세 ── -->
-<div class="grid g3" style="margin-bottom:16px;">
-
-  <!-- 고정 지출 -->
-  <div class="card">
-    <div class="stitle">고정 지출 <span class="chip">5월 실측 → 6·7월 동일</span></div>
-    <div class="ssubtitle">월 고정비 총 <strong>799만원</strong> · 매월 동일 예상</div>
-    <div>
-      <div class="detail-row">
-        <span class="dot12" style="background:#818cf8;"></span>
-        <span class="dr-name">사대보험료</span>
-        <div class="dr-bar-wrap"><div class="dr-bar" style="width:100%;background:#818cf8;"></div></div>
-        <span class="dr-amount" style="color:#6366f1;">250만</span>
-        <span class="dr-ratio">31.3%</span>
-      </div>
-      <div class="detail-row">
-        <span class="dot12" style="background:#6366f1;"></span>
-        <span class="dr-name">이자비용</span>
-        <div class="dr-bar-wrap"><div class="dr-bar" style="width:74%;background:#6366f1;"></div></div>
-        <span class="dr-amount" style="color:#6366f1;">185만</span>
-        <span class="dr-ratio">23.2%</span>
-      </div>
-      <div class="detail-row">
-        <span class="dot12" style="background:#a5b4fc;"></span>
-        <span class="dr-name">사무실 임대료</span>
-        <div class="dr-bar-wrap"><div class="dr-bar" style="width:66%;background:#a5b4fc;"></div></div>
-        <span class="dr-amount" style="color:#6366f1;">165만</span>
-        <span class="dr-ratio">20.7%</span>
-      </div>
-      <div class="detail-row">
-        <span class="dot12" style="background:#c7d2fe;"></span>
-        <span class="dr-name">차량 임대료</span>
-        <div class="dr-bar-wrap"><div class="dr-bar" style="width:54%;background:#c7d2fe;"></div></div>
-        <span class="dr-amount" style="color:#6366f1;">136만</span>
-        <span class="dr-ratio">17.0%</span>
-      </div>
-      <div class="detail-row">
-        <span class="dot12" style="background:#e0e7ff;"></span>
-        <span class="dr-name">건물관리비</span>
-        <div class="dr-bar-wrap"><div class="dr-bar" style="width:13%;background:#e0e7ff;"></div></div>
-        <span class="dr-amount" style="color:#6366f1;">33만</span>
-        <span class="dr-ratio">4.2%</span>
-      </div>
-      <div class="detail-row">
-        <span class="dot12" style="background:#ede9fe;"></span>
-        <span class="dr-name">기장료</span>
-        <div class="dr-bar-wrap"><div class="dr-bar" style="width:9%;background:#ede9fe;"></div></div>
-        <span class="dr-amount" style="color:#6366f1;">22만</span>
-        <span class="dr-ratio">2.8%</span>
-      </div>
-      <div class="detail-row">
-        <span class="dot12" style="background:#f5f3ff;"></span>
-        <span class="dr-name">통신비 + SW구독</span>
-        <div class="dr-bar-wrap"><div class="dr-bar" style="width:3%;background:#f5f3ff;border:1px solid #e0e7ff;"></div></div>
-        <span class="dr-amount" style="color:#6366f1;">6만</span>
-        <span class="dr-ratio">0.8%</span>
-      </div>
-    </div>
-    <div style="margin-top:14px;padding:12px;background:#f5f3ff;border-radius:10px;display:flex;justify-content:space-between;align-items:center;">
-      <span style="font-size:12px;color:#4f46e5;font-weight:600;">월 고정비 합계</span>
-      <span style="font-size:16px;font-weight:800;color:#4f46e5;">7,987,145원</span>
-    </div>
-  </div>
-
-  <!-- 변동 지출 -->
-  <div class="card">
-    <div class="stitle">변동 지출 <span class="chip warn">5월 실측 · 6·7월 예측</span></div>
-    <div class="ssubtitle">5월 총 <strong>1억 2,335만원</strong> · 광고·매입 비중 높음</div>
-    <div>
-      <div class="detail-row">
-        <span class="dot12" style="background:#ef4444;"></span>
-        <span class="dr-name">인플루언서 광고비</span>
-        <div class="dr-bar-wrap"><div class="dr-bar" style="width:100%;background:#ef4444;"></div></div>
-        <span class="dr-amount" style="color:#ef4444;">3,740만</span>
-        <span class="dr-ratio">30.3%</span>
-      </div>
-      <div class="detail-row">
-        <span class="dot12" style="background:#f97316;"></span>
-        <span class="dr-name">상품매출원가</span>
-        <div class="dr-bar-wrap"><div class="dr-bar" style="width:91%;background:#f97316;"></div></div>
-        <span class="dr-amount" style="color:#ef4444;">3,424만</span>
-        <span class="dr-ratio">27.8%</span>
-      </div>
-      <div class="detail-row">
-        <span class="dot12" style="background:#fbbf24;"></span>
-        <span class="dr-name">신용카드 결제</span>
-        <div class="dr-bar-wrap"><div class="dr-bar" style="width:42%;background:#fbbf24;"></div></div>
-        <span class="dr-amount" style="color:#ef4444;">1,584만</span>
-        <span class="dr-ratio">12.8%</span>
-      </div>
-      <div class="detail-row">
-        <span class="dot12" style="background:#fb923c;"></span>
-        <span class="dr-name">세금과 공과금</span>
-        <div class="dr-bar-wrap"><div class="dr-bar" style="width:40%;background:#fb923c;"></div></div>
-        <span class="dr-amount" style="color:#ef4444;">1,481만</span>
-        <span class="dr-ratio">12.0%</span>
-      </div>
-      <div class="detail-row">
-        <span class="dot12" style="background:#fde68a;"></span>
-        <span class="dr-name">광고선전비</span>
-        <div class="dr-bar-wrap"><div class="dr-bar" style="width:29%;background:#fde68a;"></div></div>
-        <span class="dr-amount" style="color:#ef4444;">1,091만</span>
-        <span class="dr-ratio">8.8%</span>
-      </div>
-      <div class="detail-row">
-        <span class="dot12" style="background:#fed7aa;"></span>
-        <span class="dr-name">기타수수료</span>
-        <div class="dr-bar-wrap"><div class="dr-bar" style="width:16%;background:#fed7aa;"></div></div>
-        <span class="dr-amount" style="color:#ef4444;">600만</span>
-        <span class="dr-ratio">4.9%</span>
-      </div>
-      <div class="detail-row">
-        <span class="dot12" style="background:#fef3c7;"></span>
-        <span class="dr-name">해외접대비 + 기타</span>
-        <div class="dr-bar-wrap"><div class="dr-bar" style="width:9%;background:#fef3c7;border:1px solid #fde68a;"></div></div>
-        <span class="dr-amount" style="color:#ef4444;">414만</span>
-        <span class="dr-ratio">3.4%</span>
-      </div>
-    </div>
-    <div style="margin-top:14px;padding:12px;background:#fff7ed;border-radius:10px;display:flex;justify-content:space-between;align-items:center;">
-      <span style="font-size:12px;color:#ea580c;font-weight:600;">월 변동비 합계</span>
-      <span style="font-size:16px;font-weight:800;color:#ea580c;">123,356,129원</span>
-    </div>
-  </div>
-
-  <!-- 인건비 + 매출 상세 -->
-  <div style="display:flex;flex-direction:column;gap:16px;">
-    <!-- 인건비 -->
-    <div class="card">
-      <div class="stitle">인건비 <span class="chip">5월 실측 → 6·7월 동일</span></div>
-      <div class="ssubtitle">월 총 <strong>1,445만원</strong></div>
-      <div>
-        <div class="detail-row">
-          <span class="dot12" style="background:#8b5cf6;"></span>
-          <span class="dr-name">박영춘</span>
-          <div class="dr-bar-wrap"><div class="dr-bar" style="width:100%;background:#8b5cf6;"></div></div>
-          <span class="dr-amount" style="color:#7c3aed;">458만</span>
-        </div>
-        <div class="detail-row">
-          <span class="dot12" style="background:#a78bfa;"></span>
-          <span class="dr-name">이수진</span>
-          <div class="dr-bar-wrap"><div class="dr-bar" style="width:66%;background:#a78bfa;"></div></div>
-          <span class="dr-amount" style="color:#7c3aed;">300만</span>
-        </div>
-        <div class="detail-row">
-          <span class="dot12" style="background:#c4b5fd;"></span>
-          <span class="dr-name">황현</span>
-          <div class="dr-bar-wrap"><div class="dr-bar" style="width:69%;background:#c4b5fd;"></div></div>
-          <span class="dr-amount" style="color:#7c3aed;">314만</span>
-        </div>
-        <div class="detail-row">
-          <span class="dot12" style="background:#ddd6fe;"></span>
-          <span class="dr-name">김혜진</span>
-          <div class="dr-bar-wrap"><div class="dr-bar" style="width:48%;background:#ddd6fe;"></div></div>
-          <span class="dr-amount" style="color:#7c3aed;">221만</span>
-        </div>
-        <div class="detail-row">
-          <span class="dot12" style="background:#ede9fe;"></span>
-          <span class="dr-name">이성민</span>
-          <div class="dr-bar-wrap"><div class="dr-bar" style="width:33%;background:#ede9fe;border:1px solid #ddd6fe;"></div></div>
-          <span class="dr-amount" style="color:#7c3aed;">150만</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- 매출 채널 구성 -->
-    <div class="card">
-      <div class="stitle">매출 채널 <span class="chip blue">5월 실측</span></div>
-      <div class="ssubtitle">총 <strong>1억 8,250만원</strong></div>
-      <div>
-        <div class="detail-row">
-          <span class="dot12" style="background:#3b82f6;"></span>
-          <span class="dr-name">상품매출 (B2B)</span>
-          <div class="dr-bar-wrap"><div class="dr-bar" style="width:100%;background:#3b82f6;"></div></div>
-          <span class="dr-amount" style="color:#2563eb;">9,512만</span>
-          <span class="dr-ratio">52.1%</span>
-        </div>
-        <div class="detail-row">
-          <span class="dot12" style="background:#60a5fa;"></span>
-          <span class="dr-name">서비스매출</span>
-          <div class="dr-bar-wrap"><div class="dr-bar" style="width:49%;background:#60a5fa;"></div></div>
-          <span class="dr-amount" style="color:#2563eb;">4,658만</span>
-          <span class="dr-ratio">25.5%</span>
-        </div>
-        <div class="detail-row">
-          <span class="dot12" style="background:#93c5fd;"></span>
-          <span class="dr-name">온라인 매출</span>
-          <div class="dr-bar-wrap"><div class="dr-bar" style="width:42%;background:#93c5fd;"></div></div>
-          <span class="dr-amount" style="color:#2563eb;">4,043만</span>
-          <span class="dr-ratio">22.2%</span>
-        </div>
-        <div class="detail-row">
-          <span class="dot12" style="background:#dbeafe;"></span>
-          <span class="dr-name">기타 (외상·취소)</span>
-          <div class="dr-bar-wrap"><div class="dr-bar" style="width:1%;background:#dbeafe;border:1px solid #bfdbfe;"></div></div>
-          <span class="dr-amount" style="color:#2563eb;">36만</span>
-          <span class="dr-ratio">0.2%</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<!-- ── 월별 종합 비교 표 ── -->
 <div class="card">
-  <div class="stitle">월별 손익 종합 비교 <span class="chip">4월 실측 / 5월 실측 / 6·7월 예측</span></div>
-  <div class="ssubtitle">변동지출 6·7월 예측은 5월 실측 기준, 매출은 4·5월 평균 추세 반영</div>
-  <table>
-    <thead>
-      <tr>
-        <th>항목</th>
-        <th class="r">4월 <span class="month-tag act-tag">실측</span></th>
-        <th class="r">5월 <span class="month-tag act-tag">실측</span></th>
-        <th class="r">6월 <span class="month-tag fore-tag">예측</span></th>
-        <th class="r">7월 <span class="month-tag fore-tag">예측</span></th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td colspan="5" style="padding:6px 10px; font-size:11px; font-weight:700; color:#94a3b8; background:#f8fafc;">▸ 매출</td></tr>
-      <tr>
-        <td style="padding-left:20px; color:#64748b;">상품매출 (B2B)</td>
-        <td class="in">1억 4,859만</td>
-        <td class="in">9,512만</td>
-        <td class="in" style="color:#93c5fd;">1억 100만</td>
-        <td class="in" style="color:#93c5fd;">9,000만</td>
-      </tr>
-      <tr>
-        <td style="padding-left:20px; color:#64748b;">서비스매출</td>
-        <td class="in">—</td>
-        <td class="in">4,658만</td>
-        <td class="in" style="color:#93c5fd;">2,500만</td>
-        <td class="in" style="color:#93c5fd;">2,000만</td>
-      </tr>
-      <tr>
-        <td style="padding-left:20px; color:#64748b;">온라인매출 (스마트스토어 등)</td>
-        <td class="in">7,134만</td>
-        <td class="in">4,043만</td>
-        <td class="in" style="color:#93c5fd;">4,500만</td>
-        <td class="in" style="color:#93c5fd;">4,200만</td>
-      </tr>
-      <tr class="total">
-        <td><strong>매출 합계</strong></td>
-        <td class="in" style="font-size:13px;"><strong>2억 1,993만</strong></td>
-        <td class="in" style="font-size:13px;"><strong>1억 8,213만</strong></td>
-        <td class="in" style="font-size:13px; color:#60a5fa;"><strong>1억 7,000만</strong></td>
-        <td class="in" style="font-size:13px; color:#60a5fa;"><strong>1억 5,200만</strong></td>
-      </tr>
-
-      <tr><td colspan="5" style="padding:6px 10px; font-size:11px; font-weight:700; color:#94a3b8; background:#f8fafc;">▸ 지출</td></tr>
-      <tr>
-        <td style="padding-left:20px; color:#64748b;">고정 지출</td>
-        <td class="out">-799만</td>
-        <td class="out">-799만</td>
-        <td class="out" style="color:#fca5a5;">-799만</td>
-        <td class="out" style="color:#fca5a5;">-799만</td>
-      </tr>
-      <tr>
-        <td style="padding-left:20px; color:#64748b;">인건비</td>
-        <td class="out">-1,445만</td>
-        <td class="out">-1,445만</td>
-        <td class="out" style="color:#fca5a5;">-1,445만</td>
-        <td class="out" style="color:#fca5a5;">-1,445만</td>
-      </tr>
-      <tr>
-        <td style="padding-left:20px; color:#64748b;">변동 지출</td>
-        <td class="out">-1억 7,894만</td>
-        <td class="out">-1억 2,335만</td>
-        <td class="out" style="color:#fca5a5;">-1억 2,000만</td>
-        <td class="out" style="color:#fca5a5;">-1억 1,500만</td>
-      </tr>
-      <tr class="total">
-        <td><strong>지출 합계</strong></td>
-        <td class="out" style="font-size:13px;"><strong>-2억 0,138만</strong></td>
-        <td class="out" style="font-size:13px;"><strong>-1억 4,579만</strong></td>
-        <td class="out" style="font-size:13px; color:#f87171;"><strong>-1억 4,244만</strong></td>
-        <td class="out" style="font-size:13px; color:#f87171;"><strong>-1억 3,744만</strong></td>
-      </tr>
-
-      <tr style="background:#f8fafc; border-top:2px solid #e2e8f0;">
-        <td style="font-size:14px; font-weight:800;">순이익</td>
-        <td style="font-size:14px; font-weight:800; text-align:right; color:#ef4444;">-1,855만</td>
-        <td style="font-size:14px; font-weight:800; text-align:right; color:#16a34a;">+3,634만</td>
-        <td style="font-size:14px; font-weight:800; text-align:right; color:#f59e0b;">+2,756만</td>
-        <td style="font-size:14px; font-weight:800; text-align:right; color:#f59e0b;">+1,456만</td>
-      </tr>
-    </tbody>
-  </table>
+  <div class="stitle">이달 고정지출 납부 일정 (월 총 799만)</div>
+  <table><thead><tr><th>일자</th><th>항목</th><th style="text-align:right">금액</th></tr></thead>
+  <tbody>
+    <tr><td>6일</td><td>기장료(세무법인다성)</td><td class="out">220,000원</td></tr>
+    <tr><td>11일</td><td>사대보험료 + SW구독(웹케시)</td><td class="out">2,527,860원</td></tr>
+    <tr><td>15일</td><td>차량임대료(아이엠캐피탈 + 엠지캐피탈)</td><td class="out">1,360,108원</td></tr>
+    <tr><td>21일</td><td>건물관리비 + 사무실임대료</td><td class="out">1,988,670원</td></tr>
+    <tr><td>26일</td><td>이자비용 + 통신비</td><td class="out">1,890,507원</td></tr>
+  </tbody></table>
 </div>
-
-<script>
-// ── 메인 스택 바 차트 ──────────────────────────────────
-const labels = ['4월 (실측)', '5월 (실측)', '6월 (예측)', '7월 (예측)'];
-const isFc = [false, false, true, true];
-
-const mkColor = (hex, alpha) => hex + Math.round(alpha*255).toString(16).padStart(2,'0');
-
-// 매출 (양수)
-const revProduct  = [148595580, 95121670, 101000000, 90000000];
-const revService  = [0,         46582500, 25000000,  20000000];
-const revOnline   = [71341609,  40433569, 45000000,  42000000];
-
-// 지출 (음수)
-const expFixed    = [-7987145,   -7987145,   -7987145,   -7987145];
-const expSalary   = [-14450854,  -14450854,  -14450854,  -14450854];
-const expVariable = [-123356129, -123356129, -120000000, -115000000];
-
-const ctx = document.getElementById('mainChart').getContext('2d');
-
-const borderFc = (baseColor) => ({
-  borderColor: isFc.map((f,i) => f ? baseColor : baseColor),
-  borderWidth: isFc.map((f,i) => f ? 1.5 : 0),
-  borderDash:  [],
-});
-
-new Chart(ctx, {
-  type: 'bar',
-  data: {
-    labels,
-    datasets: [
-      // 매출 레이어
-      {
-        label: '상품매출 (B2B)',
-        data: revProduct,
-        backgroundColor: isFc.map(f => f ? '#3b82f688' : '#3b82f6'),
-        borderColor: isFc.map(f => f ? '#3b82f6' : 'transparent'),
-        borderWidth: isFc.map(f => f ? 1.5 : 0),
-        borderRadius: { topLeft:6, topRight:6, bottomLeft:0, bottomRight:0 },
-        borderSkipped: false,
-        stack: 'revenue',
-      },
-      {
-        label: '서비스매출',
-        data: revService,
-        backgroundColor: isFc.map(f => f ? '#60a5fa88' : '#60a5fa'),
-        borderColor: isFc.map(f => f ? '#60a5fa' : 'transparent'),
-        borderWidth: isFc.map(f => f ? 1.5 : 0),
-        borderSkipped: false,
-        stack: 'revenue',
-      },
-      {
-        label: '온라인 매출',
-        data: revOnline,
-        backgroundColor: isFc.map(f => f ? '#93c5fd88' : '#93c5fd'),
-        borderColor: isFc.map(f => f ? '#93c5fd' : 'transparent'),
-        borderWidth: isFc.map(f => f ? 1.5 : 0),
-        borderRadius: { topLeft:0, topRight:0, bottomLeft:6, bottomRight:6 },
-        borderSkipped: false,
-        stack: 'revenue',
-      },
-      // 지출 레이어
-      {
-        label: '고정 지출',
-        data: expFixed,
-        backgroundColor: isFc.map(f => f ? '#6366f188' : '#6366f1'),
-        borderColor: isFc.map(f => f ? '#6366f1' : 'transparent'),
-        borderWidth: isFc.map(f => f ? 1.5 : 0),
-        borderRadius: { topLeft:6, topRight:6, bottomLeft:0, bottomRight:0 },
-        borderSkipped: false,
-        stack: 'expense',
-      },
-      {
-        label: '인건비',
-        data: expSalary,
-        backgroundColor: isFc.map(f => f ? '#8b5cf688' : '#8b5cf6'),
-        borderColor: isFc.map(f => f ? '#8b5cf6' : 'transparent'),
-        borderWidth: isFc.map(f => f ? 1.5 : 0),
-        borderSkipped: false,
-        stack: 'expense',
-      },
-      {
-        label: '변동 지출',
-        data: expVariable,
-        backgroundColor: isFc.map(f => f ? '#f9731688' : '#f97316'),
-        borderColor: isFc.map(f => f ? '#f97316' : 'transparent'),
-        borderWidth: isFc.map(f => f ? 1.5 : 0),
-        borderRadius: { topLeft:0, topRight:0, bottomLeft:6, bottomRight:6 },
-        borderSkipped: false,
-        stack: 'expense',
-      },
-    ]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: { mode:'index' },
-    plugins: {
-      legend: {
-        position: 'top',
-        align: 'end',
-        labels: { color:'#64748b', font:{size:11}, boxWidth:10, padding:12, usePointStyle:true }
-      },
-      tooltip: {
-        backgroundColor:'#fff',
-        borderColor:'#e2e8f0', borderWidth:1,
-        titleColor:'#0f172a', bodyColor:'#64748b',
-        padding:12,
-        callbacks: {
-          label: c => {
-            const v = Math.abs(c.raw);
-            const s = c.raw < 0 ? '-' : '+';
-            return ` ${c.dataset.label}: ${s}${Math.round(v/10000).toLocaleString()}만원`;
-          }
-        }
-      }
-    },
-    scales: {
-      x: {
-        stacked: true,
-        grid: { display:false },
-        ticks: { color:'#94a3b8', font:{size:11} },
-        border: { display:false }
-      },
-      y: {
-        stacked: true,
-        grid: { color:'#f1f5f9' },
-        border: { display:false },
-        ticks: {
-          color:'#94a3b8', font:{size:10},
-          callback: v => {
-            const abs = Math.abs(v);
-            if(abs >= 100000000) return (v/100000000).toFixed(1)+'억';
-            if(abs >= 10000) return Math.round(v/10000)+'만';
-            return v;
-          }
-        }
-      }
-    }
-  }
-});
-
-// ── 도넛 차트 ──────────────────────────────────────────
-const ctx2 = document.getElementById('donutChart').getContext('2d');
-new Chart(ctx2, {
-  type: 'doughnut',
-  data: {
-    labels: ['고정 지출', '인건비', '변동 지출'],
-    datasets: [{
-      data: [7987145, 14450854, 123356129],
-      backgroundColor: ['#6366f1','#8b5cf6','#f97316'],
-      borderColor: '#fff',
-      borderWidth: 3,
-      hoverOffset: 6,
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    cutout: '68%',
-    plugins: {
-      legend: { display:false },
-      tooltip: {
-        backgroundColor:'#fff',
-        borderColor:'#e2e8f0', borderWidth:1,
-        titleColor:'#0f172a', bodyColor:'#64748b',
-        callbacks: {
-          label: c => ` ${c.label}: ${Math.round(c.raw/10000).toLocaleString()}만원 (${c.parsed.toFixed(1)}%)`
-        }
-      }
-    }
-  }
-});
-</script>
-</body>
-</html>
+</body></html>
