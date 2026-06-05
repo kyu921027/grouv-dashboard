@@ -1,10 +1,17 @@
-<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"/><title>그로우 자금일보 2026-06-05</title>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>그로우 자금일보 2026-06-05</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8fafc;color:#0f172a;padding:32px 40px}
 .card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:20px 24px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-.grid{display:grid;gap:14px}.g4{grid-template-columns:repeat(4,1fr)}.g31{grid-template-columns:2fr 1fr}.g2{grid-template-columns:1fr 1fr}
+.grid{display:grid;gap:14px}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g31{grid-template-columns:2fr 1fr}
+.g2{grid-template-columns:1fr 1fr}
 h1{font-size:22px;font-weight:800}
 .lbl{font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
 .val{font-size:24px;font-weight:800;letter-spacing:-1px}
@@ -13,7 +20,8 @@ h1{font-size:22px;font-weight:800}
 .badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px;margin-right:6px}
 .actual{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
 .forecast{background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe}
-.h280{height:280px;position:relative}.h180{height:180px;position:relative}
+.h280{height:280px;position:relative}
+.h180{height:180px;position:relative}
 table{width:100%;border-collapse:collapse;font-size:12px}
 thead th{padding:8px 10px;font-size:11px;font-weight:600;color:#94a3b8;text-align:left;border-bottom:1px solid #f1f5f9;text-transform:uppercase}
 tbody tr{border-bottom:1px solid #f8fafc}
@@ -21,92 +29,128 @@ tbody td{padding:8px 10px}
 .in{color:#2563eb;font-weight:600;text-align:right}
 .out{color:#ef4444;font-weight:600;text-align:right}
 .ttl{background:#f8fafc;font-weight:700}
-</style></head><body>
+</style>
+</head>
+<body>
+
 <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px">
-  <div><h1>그로우 자금일보</h1><p style="font-size:13px;color:#64748b;margin-top:4px">업데이트: 2026-06-05 | <a href="https://kyu921027.github.io/grouv-dashboard/" style="color:#2563eb">GitHub Pages</a></p></div>
-  <div style="text-align:right"><div style="font-size:11px;color:#94a3b8;margin-bottom:2px">현재 잔액</div><div style="font-size:22px;font-weight:800;color:#2563eb">0만</div></div>
+  <div>
+    <h1>그로우 자금일보</h1>
+    <p style="font-size:13px;color:#64748b;margin-top:4px">업데이트: 2026-06-05 | <a href="https://kyu921027.github.io/grouv-dashboard/" style="color:#2563eb">GitHub Pages</a></p>
+  </div>
+  <div style="text-align:right">
+    <div style="font-size:11px;color:#94a3b8;margin-bottom:2px">현재 잔액</div>
+    <div style="font-size:22px;font-weight:800;color:#2563eb">0만</div>
+  </div>
 </div>
-<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
-  <span style="font-size:18px">⚠️</span>
-  <div><strong style="color:#92400e">API 데이터 미수신</strong><span style="color:#b45309;font-size:12px;margin-left:8px">Granter API IP 허용 목록 미등록 (클라우드 실행 환경)</span></div>
+
+<div style="margin-bottom:16px">
+  <span class="badge actual">04월 실측</span>
+  <span class="badge forecast">06월 예측</span>
+  <span class="badge forecast">07월 예측</span>
 </div>
-<div><span class="badge actual">04월 실측</span><span class="badge forecast">06월 예측</span><span class="badge forecast">07월 예측</span></div>
-<div style="margin-top:16px"></div>
 
 <div class="grid g4" style="margin-bottom:14px">
-  <div class="card"><div class="lbl">06월 예측 매출</div><div class="val" style="color:#2563eb">0만</div><div class="sub">전월 대비 93% 적용</div></div>
+  <div class="card"><div class="lbl">06월 예측 매출</div><div class="val" style="color:#2563eb">0만</div><div class="sub">전월 기준 93%</div></div>
   <div class="card"><div class="lbl">06월 예측 지출</div><div class="val" style="color:#ef4444">0만</div><div class="sub">고정 0만 / 변동 0만</div></div>
   <div class="card"><div class="lbl">06월 예측 순이익</div><div class="val" style="color:#16a34a">+0만</div><div class="sub">흑자 예상</div></div>
-  <div class="card"><div class="lbl">이달 현재까지 매출</div><div class="val" style="color:#0ea5e9">0만</div><div class="sub">지출 0만</div></div>
+  <div class="card"><div class="lbl">이달 현재 매출</div><div class="val" style="color:#0ea5e9">0만</div><div class="sub">지출 0만</div></div>
 </div>
 
 <div class="grid g2" style="margin-bottom:14px">
   <div class="card">
-    <div class="stitle">이번주 납부 예정 고정지출 (6/1 ~ 6/7)</div>
-    <table><thead><tr><th>일자</th><th>항목</th><th style="text-align:right">금액</th></tr></thead>
-    <tbody><tr><td>6일</td><td>기장료(세무법인다성)</td><td style="text-align:right;color:#ef4444;font-weight:700">220,000원</td></tr></tbody></table>
+    <div class="stitle">⚠️ 이번주 납부 예정 (6/1 ~ 6/7)</div>
+    <table><thead><tr><th>납부일</th><th>항목</th><th style="text-align:right">금액</th></tr></thead>
+    <tbody><tr><td>6일</td><td>기장료 (세무법인다성)</td><td style="text-align:right;color:#ef4444;font-weight:700">220,000원</td></tr></tbody></table>
   </div>
   <div class="card">
-    <div class="stitle">계좌 잔액 현황</div>
-    <div style="color:#64748b;font-size:12px;padding:8px 0;">⚠️ API 접근 불가 (IP 허용 목록 미등록)</div>
-    <div style="margin-top:8px;padding-top:8px;border-top:2px solid #e2e8f0;display:flex;justify-content:space-between"><strong>총계</strong><strong style="color:#2563eb">0만</strong></div>
+    <div class="stitle">계좌 잔액</div>
+    <div style="color:#94a3b8">계좌 데이터 없음</div>
+    <div style="margin-top:8px;padding-top:8px;border-top:2px solid #e2e8f0;display:flex;justify-content:space-between">
+      <strong>총계</strong><strong style="color:#2563eb">0만</strong>
+    </div>
   </div>
 </div>
 
 <div class="grid g31" style="margin-bottom:14px">
   <div class="card">
-    <div class="stitle">매출 vs 지출 (04월 실측 / 06월·07월 예측)</div>
+    <div class="stitle">매출 vs 지출 | 04월 실측 · 06월·07월 예측</div>
     <div class="h280"><canvas id="mainChart"></canvas></div>
   </div>
   <div class="card">
     <div class="stitle">06월 예측 지출 구성</div>
     <div class="h180"><canvas id="donutChart"></canvas></div>
     <div style="margin-top:12px;font-size:12px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>🟣 고정(인건비 포함)</span><strong>0만 (0%)</strong></div>
-      <div style="display:flex;justify-content:space-between"><span>🟠 변동</span><strong>0만 (0%)</strong></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span>🟣 고정(인건비포함)</span><strong>0만 (0%)</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <span>🟠 변동</span><strong>0만 (0%)</strong>
+      </div>
     </div>
   </div>
 </div>
 
 <div class="card" style="margin-bottom:14px">
-  <div class="stitle">손익 종합 | 04월 실측 기준 예측</div>
-  <table><thead><tr><th>항목</th><th style="text-align:right">04월(실측)</th><th style="text-align:right">06월(예측)</th><th style="text-align:right">07월(예측)</th></tr></thead>
-  <tbody>
-    <tr><td>매출 합계</td><td class="in">0만</td><td class="in">0만</td><td class="in">0만</td></tr>
-    <tr><td style="padding-left:16px;color:#64748b">고정지출(인건비포함)</td><td class="out">-0만</td><td class="out">-0만</td><td class="out">-0만</td></tr>
-    <tr><td style="padding-left:16px;color:#64748b">변동지출</td><td class="out">-0만</td><td class="out">-0만</td><td class="out">-0만</td></tr>
-    <tr class="ttl"><td>지출 합계</td><td class="out">-0만</td><td class="out">-0만</td><td class="out">-0만</td></tr>
-    <tr style="border-top:2px solid #e2e8f0">
-      <td style="font-weight:800">순이익</td>
-      <td style="font-weight:800;text-align:right;color:#16a34a">+0만</td>
-      <td style="font-weight:800;text-align:right;color:#16a34a">+0만</td>
-      <td style="font-weight:800;text-align:right;color:#16a34a">+0만</td>
-    </tr>
-  </tbody></table>
+  <div class="stitle">손익 종합 | 04월 실측 기준</div>
+  <table>
+    <thead><tr><th>항목</th><th style="text-align:right">04월(실측)</th><th style="text-align:right">06월(예측)</th><th style="text-align:right">07월(예측)</th></tr></thead>
+    <tbody>
+      <tr><td>매출</td><td class="in">0만</td><td class="in">0만</td><td class="in">0만</td></tr>
+      <tr><td style="padding-left:16px;color:#64748b">고정(인건비포함)</td><td class="out">-0만</td><td class="out">-0만</td><td class="out">-0만</td></tr>
+      <tr><td style="padding-left:16px;color:#64748b">변동</td><td class="out">-0만</td><td class="out">-0만</td><td class="out">-0만</td></tr>
+      <tr class="ttl"><td>지출 합계</td><td class="out">-0만</td><td class="out">-0만</td><td class="out">-0만</td></tr>
+      <tr style="border-top:2px solid #e2e8f0">
+        <td style="font-weight:800">순이익</td>
+        <td style="font-weight:800;text-align:right;color:#16a34a">+0만</td>
+        <td style="font-weight:800;text-align:right;color:#16a34a">+0만</td>
+        <td style="font-weight:800;text-align:right;color:#16a34a">+0만</td>
+      </tr>
+    </tbody>
+  </table>
 </div>
 
 <div class="card">
-  <div class="stitle">이달 고정지출 납부 일정 (월 총 799만)</div>
-  <table><thead><tr><th>일자</th><th>항목</th><th style="text-align:right">금액</th></tr></thead>
-  <tbody>
-    <tr><td>6일</td><td>기장료(세무법인다성)</td><td class="out">220,000원</td></tr>
-    <tr><td>11일</td><td>사대보험료 + SW구독(웹케시)</td><td class="out">2,527,860원</td></tr>
-    <tr><td>15일</td><td>차량임대료(아이엠캐피탈 + 엠지캐피탈)</td><td class="out">1,360,108원</td></tr>
-    <tr><td>21일</td><td>건물관리비 + 사무실임대료</td><td class="out">1,988,670원</td></tr>
-    <tr><td>26일</td><td>이자비용 + 통신비</td><td class="out">1,890,507원</td></tr>
-  </tbody></table>
+  <div class="stitle">이달 고정지출 납부 일정 | 월 총 7,987,145원</div>
+  <table>
+    <thead><tr><th>납부일</th><th>항목</th><th style="text-align:right">금액</th></tr></thead>
+    <tbody><tr><td>6일</td><td>기장료 (세무법인다성)</td><td style="text-align:right;color:#ef4444">220,000원</td></tr><tr><td>11일</td><td>사대보험료</td><td style="text-align:right;color:#ef4444">2,500,360원</td></tr><tr><td>11일</td><td>SW구독 (웹케시)</td><td style="text-align:right;color:#ef4444">27,500원</td></tr><tr><td>15일</td><td>차량임대료 (아이엠캐피탈)</td><td style="text-align:right;color:#ef4444">620,950원</td></tr><tr><td>15일</td><td>차량임대료 (엠지캐피탈)</td><td style="text-align:right;color:#ef4444">739,158원</td></tr><tr><td>21일</td><td>건물관리비</td><td style="text-align:right;color:#ef4444">338,670원</td></tr><tr><td>21일</td><td>사무실 임대료</td><td style="text-align:right;color:#ef4444">1,650,000원</td></tr><tr><td>26일</td><td>이자비용</td><td style="text-align:right;color:#ef4444">1,853,547원</td></tr><tr><td>26일</td><td>통신비</td><td style="text-align:right;color:#ef4444">36,960원</td></tr></tbody>
+  </table>
 </div>
 
 <script>
-const labels=['04월(실측)','06월(예측)','07월(예측)'];
-const isFc=[false,true,true];
-new Chart(document.getElementById('mainChart'),{type:'bar',data:{labels,datasets:[
-  {label:'매출',data:[0,0,0],backgroundColor:isFc.map(f=>f?'#3b82f688':'#3b82f6'),stack:'r',borderRadius:{topLeft:4,topRight:4}},
-  {label:'고정(인건비포함)',data:[-0,-0,-0],backgroundColor:isFc.map(f=>f?'#6366f188':'#6366f1'),stack:'e',borderRadius:{topLeft:4,topRight:4}},
-  {label:'변동',data:[-0,-0,-0],backgroundColor:isFc.map(f=>f?'#f9731688':'#f97316'),stack:'e',borderRadius:{bottomLeft:4,bottomRight:4}}
-]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#64748b',font:{size:11},boxWidth:10}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${Math.abs(c.raw/10000).toFixed(0)}만`}}},scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#94a3b8'},border:{display:false}},y:{stacked:true,grid:{color:'#f1f5f9'},border:{display:false},ticks:{color:'#94a3b8',callback:v=>Math.abs(v/10000)+'만'}}}}});
-const donutData=[0,0];
-const hasDonut=donutData.some(v=>v>0);
-if(hasDonut){new Chart(document.getElementById('donutChart'),{type:'doughnut',data:{labels:['고정(인건비포함)','변동'],datasets:[{data:donutData,backgroundColor:['#6366f1','#f97316'],borderWidth:3,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false}}}});}
-else{document.getElementById('donutChart').parentElement.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#94a3b8;font-size:12px">데이터 없음</div>';}
-</script></body></html>
+const labels = ['04월(실측)', '06월(예측)', '07월(예측)'];
+const isFc   = [false, true, true];
+new Chart(document.getElementById('mainChart'), {
+  type: 'bar',
+  data: {
+    labels,
+    datasets: [
+      {label:'매출',         data:[0,0,0],                         backgroundColor:isFc.map(f=>f?'#3b82f688':'#3b82f6'), stack:'r', borderRadius:{topLeft:4,topRight:4}},
+      {label:'고정(인건비포함)', data:[-0,-0,-0],    backgroundColor:isFc.map(f=>f?'#6366f188':'#6366f1'), stack:'e', borderRadius:{topLeft:4,topRight:4}},
+      {label:'변동',         data:[-0,-0,-0], backgroundColor:isFc.map(f=>f?'#f9731688':'#f97316'), stack:'e', borderRadius:{bottomLeft:4,bottomRight:4}}
+    ]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{labels:{color:'#64748b',font:{size:11},boxWidth:10}},
+      tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+Math.abs(c.raw/10000).toFixed(0)+'만'}}
+    },
+    scales:{
+      x:{stacked:true,grid:{display:false},ticks:{color:'#94a3b8'},border:{display:false}},
+      y:{stacked:true,grid:{color:'#f1f5f9'},border:{display:false},ticks:{color:'#94a3b8',callback:v=>Math.abs(v/10000)+'만'}}
+    }
+  }
+});
+new Chart(document.getElementById('donutChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['고정(인건비포함)', '변동'],
+    datasets: [{data:[0,0], backgroundColor:['#6366f1','#f97316'], borderWidth:3, borderColor:'#fff'}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false}}}
+});
+</script>
+</body>
+</html>
