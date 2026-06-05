@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"/><title>캐시플로우 대시보드 2026-06-05</title>
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"/><title>그로우 자금일보 2026-06-05</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -22,23 +22,24 @@ tbody td{padding:8px 10px}
 .out{color:#ef4444;font-weight:600;text-align:right}
 .ttl{background:#f8fafc;font-weight:700}
 </style></head><body>
-<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
-  <span style="font-size:20px">⚠️</span>
-  <div><strong style="color:#dc2626">API 데이터 조회 실패</strong><br>
-  <span style="font-size:12px;color:#64748b">Granter API에서 403 오류 반환 (Host not in allowlist). 실제 데이터가 반영되지 않았습니다. Granter 설정에서 현재 서버 IP를 화이트리스트에 추가해주세요.</span></div>
-</div>
 <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px">
   <div><h1>그로우 자금일보</h1><p style="font-size:13px;color:#64748b;margin-top:4px">업데이트: 2026-06-05 | <a href="https://kyu921027.github.io/grouv-dashboard/" style="color:#2563eb">GitHub Pages</a></p></div>
-  <div style="text-align:right"><div style="font-size:11px;color:#94a3b8;margin-bottom:2px">현재 잔액</div><div style="font-size:22px;font-weight:800;color:#94a3b8">조회불가</div></div>
+  <div style="text-align:right"><div style="font-size:11px;color:#94a3b8;margin-bottom:2px">현재 잔액</div><div style="font-size:22px;font-weight:800;color:#2563eb">0만</div></div>
 </div>
-<div><span class="badge actual">04월 실측</span><span class="badge actual">05월 실측</span><span class="badge forecast">06월 예측</span><span class="badge forecast">07월 예측</span></div>
+<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+  <span style="font-size:18px">⚠️</span>
+  <div><strong style="color:#92400e">API 데이터 미수신</strong><span style="color:#b45309;font-size:12px;margin-left:8px">Granter API IP 허용 목록 미등록 (클라우드 실행 환경)</span></div>
+</div>
+<div><span class="badge actual">04월 실측</span><span class="badge forecast">06월 예측</span><span class="badge forecast">07월 예측</span></div>
 <div style="margin-top:16px"></div>
+
 <div class="grid g4" style="margin-bottom:14px">
-  <div class="card"><div class="lbl">05월 매출</div><div class="val" style="color:#94a3b8">조회불가</div><div class="sub">API 오류</div></div>
-  <div class="card"><div class="lbl">05월 지출</div><div class="val" style="color:#94a3b8">조회불가</div><div class="sub">API 오류</div></div>
-  <div class="card"><div class="lbl">05월 순이익</div><div class="val" style="color:#94a3b8">조회불가</div><div class="sub">API 오류</div></div>
-  <div class="card"><div class="lbl">06월 예측 순이익</div><div class="val" style="color:#94a3b8">계산불가</div><div class="sub">데이터 없음</div></div>
+  <div class="card"><div class="lbl">06월 예측 매출</div><div class="val" style="color:#2563eb">0만</div><div class="sub">전월 대비 93% 적용</div></div>
+  <div class="card"><div class="lbl">06월 예측 지출</div><div class="val" style="color:#ef4444">0만</div><div class="sub">고정 0만 / 변동 0만</div></div>
+  <div class="card"><div class="lbl">06월 예측 순이익</div><div class="val" style="color:#16a34a">+0만</div><div class="sub">흑자 예상</div></div>
+  <div class="card"><div class="lbl">이달 현재까지 매출</div><div class="val" style="color:#0ea5e9">0만</div><div class="sub">지출 0만</div></div>
 </div>
+
 <div class="grid g2" style="margin-bottom:14px">
   <div class="card">
     <div class="stitle">이번주 납부 예정 고정지출 (6/1 ~ 6/7)</div>
@@ -47,27 +48,43 @@ tbody td{padding:8px 10px}
   </div>
   <div class="card">
     <div class="stitle">계좌 잔액 현황</div>
-    <div style="color:#ef4444;font-size:12px">⚠️ API 접근 오류 - 잔액 조회 불가<br><span style="color:#94a3b8">Granter API 호스트 화이트리스트 미등록</span></div>
-    <div style="margin-top:8px;padding-top:8px;border-top:2px solid #e2e8f0;display:flex;justify-content:space-between"><strong>총계</strong><strong style="color:#94a3b8">조회불가</strong></div>
+    <div style="color:#64748b;font-size:12px;padding:8px 0;">⚠️ API 접근 불가 (IP 허용 목록 미등록)</div>
+    <div style="margin-top:8px;padding-top:8px;border-top:2px solid #e2e8f0;display:flex;justify-content:space-between"><strong>총계</strong><strong style="color:#2563eb">0만</strong></div>
   </div>
 </div>
+
 <div class="grid g31" style="margin-bottom:14px">
   <div class="card">
-    <div class="stitle">월별 매출 vs 지출 (4개월) — 데이터 없음</div>
-    <div class="h280" style="display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:13px">API 접근 오류로 차트 표시 불가</div>
+    <div class="stitle">매출 vs 지출 (04월 실측 / 06월·07월 예측)</div>
+    <div class="h280"><canvas id="mainChart"></canvas></div>
   </div>
   <div class="card">
-    <div class="stitle">지출 구성비 (05월)</div>
-    <div class="h180" style="display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:13px">데이터 없음</div>
+    <div class="stitle">06월 예측 지출 구성</div>
+    <div class="h180"><canvas id="donutChart"></canvas></div>
+    <div style="margin-top:12px;font-size:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>🟣 고정(인건비 포함)</span><strong>0만 (0%)</strong></div>
+      <div style="display:flex;justify-content:space-between"><span>🟠 변동</span><strong>0만 (0%)</strong></div>
+    </div>
   </div>
 </div>
+
 <div class="card" style="margin-bottom:14px">
-  <div class="stitle">손익 종합 (4개월)</div>
-  <table><thead><tr><th>항목</th><th style="text-align:right">04월(실측)</th><th style="text-align:right">05월(실측)</th><th style="text-align:right">06월(예측)</th><th style="text-align:right">07월(예측)</th></tr></thead>
+  <div class="stitle">손익 종합 | 04월 실측 기준 예측</div>
+  <table><thead><tr><th>항목</th><th style="text-align:right">04월(실측)</th><th style="text-align:right">06월(예측)</th><th style="text-align:right">07월(예측)</th></tr></thead>
   <tbody>
-    <tr><td>매출 합계</td><td class="in" colspan="4" style="text-align:center;color:#94a3b8">API 오류로 데이터 없음</td></tr>
+    <tr><td>매출 합계</td><td class="in">0만</td><td class="in">0만</td><td class="in">0만</td></tr>
+    <tr><td style="padding-left:16px;color:#64748b">고정지출(인건비포함)</td><td class="out">-0만</td><td class="out">-0만</td><td class="out">-0만</td></tr>
+    <tr><td style="padding-left:16px;color:#64748b">변동지출</td><td class="out">-0만</td><td class="out">-0만</td><td class="out">-0만</td></tr>
+    <tr class="ttl"><td>지출 합계</td><td class="out">-0만</td><td class="out">-0만</td><td class="out">-0만</td></tr>
+    <tr style="border-top:2px solid #e2e8f0">
+      <td style="font-weight:800">순이익</td>
+      <td style="font-weight:800;text-align:right;color:#16a34a">+0만</td>
+      <td style="font-weight:800;text-align:right;color:#16a34a">+0만</td>
+      <td style="font-weight:800;text-align:right;color:#16a34a">+0만</td>
+    </tr>
   </tbody></table>
 </div>
+
 <div class="card">
   <div class="stitle">이달 고정지출 납부 일정 (월 총 799만)</div>
   <table><thead><tr><th>일자</th><th>항목</th><th style="text-align:right">금액</th></tr></thead>
@@ -79,4 +96,17 @@ tbody td{padding:8px 10px}
     <tr><td>26일</td><td>이자비용 + 통신비</td><td class="out">1,890,507원</td></tr>
   </tbody></table>
 </div>
-</body></html>
+
+<script>
+const labels=['04월(실측)','06월(예측)','07월(예측)'];
+const isFc=[false,true,true];
+new Chart(document.getElementById('mainChart'),{type:'bar',data:{labels,datasets:[
+  {label:'매출',data:[0,0,0],backgroundColor:isFc.map(f=>f?'#3b82f688':'#3b82f6'),stack:'r',borderRadius:{topLeft:4,topRight:4}},
+  {label:'고정(인건비포함)',data:[-0,-0,-0],backgroundColor:isFc.map(f=>f?'#6366f188':'#6366f1'),stack:'e',borderRadius:{topLeft:4,topRight:4}},
+  {label:'변동',data:[-0,-0,-0],backgroundColor:isFc.map(f=>f?'#f9731688':'#f97316'),stack:'e',borderRadius:{bottomLeft:4,bottomRight:4}}
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#64748b',font:{size:11},boxWidth:10}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${Math.abs(c.raw/10000).toFixed(0)}만`}}},scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#94a3b8'},border:{display:false}},y:{stacked:true,grid:{color:'#f1f5f9'},border:{display:false},ticks:{color:'#94a3b8',callback:v=>Math.abs(v/10000)+'만'}}}}});
+const donutData=[0,0];
+const hasDonut=donutData.some(v=>v>0);
+if(hasDonut){new Chart(document.getElementById('donutChart'),{type:'doughnut',data:{labels:['고정(인건비포함)','변동'],datasets:[{data:donutData,backgroundColor:['#6366f1','#f97316'],borderWidth:3,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false}}}});}
+else{document.getElementById('donutChart').parentElement.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#94a3b8;font-size:12px">데이터 없음</div>';}
+</script></body></html>
