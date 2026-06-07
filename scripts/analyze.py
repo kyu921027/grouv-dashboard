@@ -1,5 +1,6 @@
-import json, sys
+import json, sys, calendar
 from datetime import date, timedelta, datetime
+from collections import defaultdict
 
 parts = open('/tmp/dates.txt').read().strip().split('|')
 today_str, week_start_s, week_end_s = parts[0], parts[1], parts[2]
@@ -70,6 +71,36 @@ try:
 except:
     total_balance, accounts = 0, []
 
+# ── 일별 현금 흐름: 실제 입출금 집계 ─────────────────────────
+days_in_month = calendar.monthrange(today.year, today.month)[1]
+today_day     = today.day
+
+daily_in_act  = defaultdict(int)
+daily_out_act = defaultdict(int)
+for t in load_tickets('/tmp/this_tickets.json'):
+    cat = (t.get('expenseCategory') or {}).get('name', '미분류')
+    if '단순이체' in cat: continue
+    d_str = t.get('transactAt', t.get('date',''))[:10]
+    try: d = int(d_str.split('-')[2])
+    except: continue
+    amt = t.get('amount', 0)
+    if t.get('transactionType') == 'IN':    daily_in_act[d]  += amt
+    elif t.get('transactionType') == 'OUT': daily_out_act[d] += amt
+
+net_to_today = sum(daily_in_act[d] - daily_out_act[d] for d in range(1, today_day+1))
+start_bal    = total_balance - net_to_today
+
+actual_bal = []
+running = start_bal
+for d in range(1, days_in_month + 1):
+    if d <= today_day:
+        running += daily_in_act[d] - daily_out_act[d]
+        actual_bal.append(round(running / 10000, 1))
+    else:
+        actual_bal.append(None)
+
+fixed_by_day = defaultdict(int)  # FIXED_SCHEDULE 이후 채워짐
+
 tag_f1 = today.strftime('%m월')
 next_m = (date(today.year, today.month, 1) + timedelta(days=32))
 tag_f2 = next_m.strftime('%m월')
@@ -102,6 +133,27 @@ FIXED_SCHEDULE = [
     (26, '통신비',                    36960),
 ]
 total_fixed_sched = sum(a for _,_,a in FIXED_SCHEDULE)
+
+for sched_day, _, sched_amt in FIXED_SCHEDULE:
+    if sched_day <= days_in_month:
+        fixed_by_day[sched_day] += sched_amt
+
+daily_rev_fc = f1_tr / days_in_month if days_in_month else 0
+daily_var_fc = f1['variable'] / days_in_month if days_in_month else 0
+
+forecast_bal = []
+running_fc = start_bal
+for d in range(1, days_in_month + 1):
+    daily_net_fc = daily_rev_fc - daily_var_fc - fixed_by_day[d]
+    running_fc  += daily_net_fc
+    forecast_bal.append(round(running_fc / 10000, 1))
+
+actual_bal_js    = '[' + ','.join(str(v) if v is not None else 'null' for v in actual_bal) + ']'
+forecast_bal_js  = '[' + ','.join(str(v) for v in forecast_bal) + ']'
+day_labels_js    = '[' + ','.join(f'"{d}일"' for d in range(1, days_in_month + 1)) + ']'
+today_fc_bal     = fmt(forecast_bal[today_day - 1] * 10000)
+end_fc_bal       = fmt(forecast_bal[-1] * 10000)
+today_actual_bal = fmt(actual_bal[today_day - 1] * 10000) if actual_bal[today_day-1] is not None else '-'
 
 week_pay = [(d,n,a) for d,n,a in FIXED_SCHEDULE if week_start.day <= d <= week_end.day]
 week_pay_html = ''.join(
@@ -329,6 +381,38 @@ tbody td{{padding:8px 10px}}
   </div>
 </div>
 
+<!-- 일별 가용 현금 흐름 -->
+<div class="card" style="margin-bottom:14px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+    <div>
+      <div class="stitle">6월 일별 가용 현금 흐름</div>
+      <div style="font-size:12px;color:#64748b;margin-top:2px">
+        좌(실선): 실제 · 우(점선): 예상 | 고정납부일 반영
+      </div>
+    </div>
+    <div style="display:flex;gap:20px;font-size:12px">
+      <div style="text-align:right">
+        <div style="color:#94a3b8;font-size:11px">오늘 실제 잔액</div>
+        <div style="font-weight:800;color:#2563eb">{today_actual_bal}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="color:#94a3b8;font-size:11px">월말 예상 잔액</div>
+        <div style="font-weight:800;color:#f97316">{end_fc_bal}</div>
+      </div>
+    </div>
+  </div>
+  <div style="height:220px;position:relative"><canvas id="dailyCashChart"></canvas></div>
+  <div style="display:flex;gap:16px;margin-top:10px;font-size:11px;color:#64748b">
+    <div style="display:flex;align-items:center;gap:5px">
+      <div style="width:24px;height:2px;background:#2563eb;border-radius:2px"></div>실제 잔액 (1~{today_day}일)
+    </div>
+    <div style="display:flex;align-items:center;gap:5px">
+      <div style="width:24px;height:2px;background:#f97316;border-radius:2px;
+                  background:repeating-linear-gradient(90deg,#f97316 0,#f97316 4px,transparent 4px,transparent 8px)"></div>예상 잔액 (전월 기준)
+    </div>
+  </div>
+</div>
+
 <!-- 차트 + 지출 구성 -->
 <div class="grid g31" style="margin-bottom:14px">
   <div class="card">
@@ -514,6 +598,67 @@ function closePopup(type) {{
 
 document.addEventListener('keydown', e => {{
   if (e.key === 'Escape') {{ closePopup('fixed'); closePopup('variable'); }}
+}});
+
+// 일별 현금 흐름 차트
+new Chart(document.getElementById('dailyCashChart'), {{
+  type: 'line',
+  data: {{
+    labels: {day_labels_js},
+    datasets: [
+      {{
+        label: '실제 잔액',
+        data: {actual_bal_js},
+        borderColor: '#2563eb',
+        backgroundColor: 'rgba(37,99,235,0.08)',
+        fill: true,
+        tension: 0.35,
+        pointRadius: {[2 if i < today_day else 0 for i in range(days_in_month)]},
+        pointHoverRadius: 5,
+        borderWidth: 2.5,
+        spanGaps: false
+      }},
+      {{
+        label: '예상 잔액',
+        data: {forecast_bal_js},
+        borderColor: '#f97316',
+        backgroundColor: 'rgba(249,115,22,0.05)',
+        fill: false,
+        tension: 0.35,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        borderWidth: 1.5,
+        borderDash: [6, 4]
+      }}
+    ]
+  }},
+  options: {{
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {{ mode: 'index', intersect: false }},
+    plugins: {{
+      legend: {{ display: false }},
+      tooltip: {{
+        callbacks: {{
+          title: ctx => ctx[0].label + ' 잔액',
+          label: ctx => ' ' + ctx.dataset.label + ': ' + (ctx.raw ?? '-') + '만'
+        }}
+      }}
+    }},
+    scales: {{
+      x: {{
+        grid: {{ display: false }},
+        ticks: {{ color: '#94a3b8', font: {{ size: 10 }},
+                  callback: (v, i) => ((i+1) % 5 === 1 || i+1 === {today_day}) ? (i+1)+'일' : '' }},
+        border: {{ display: false }}
+      }},
+      y: {{
+        grid: {{ color: '#f1f5f9' }},
+        border: {{ display: false }},
+        ticks: {{ color: '#94a3b8', callback: v => v + '만' }}
+      }}
+    }}
+  }}
 }});
 
 // 차트 (이달 현재 + 6월 예상 + 7월 예상)
