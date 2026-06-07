@@ -105,7 +105,7 @@ tag_f1 = today.strftime('%m월')
 next_m = (date(today.year, today.month, 1) + timedelta(days=32))
 tag_f2 = next_m.strftime('%m월')
 
-def fmt(v): return f'{int(v)//10000:,}만'
+def fmt(v): return f'{int(v):,}원'
 
 f1 = {'revenue': {k: int(v*0.93) for k,v in prev['revenue'].items()},
       'fixed': prev['fixed'], 'variable': prev['variable']}
@@ -536,7 +536,7 @@ const FIXED_ITEMS = {fixed_js};
 let currentTab = 'f1';
 
 function fmt(v) {{
-  return Math.round(v/10000).toLocaleString() + '만';
+  return Math.round(v).toLocaleString() + '원';
 }}
 
 // 탭 전환
@@ -641,7 +641,7 @@ new Chart(document.getElementById('dailyCashChart'), {{
       tooltip: {{
         callbacks: {{
           title: ctx => ctx[0].label + ' 잔액',
-          label: ctx => ' ' + ctx.dataset.label + ': ' + (ctx.raw ?? '-') + '만'
+          label: ctx => ' ' + ctx.dataset.label + ': ' + (ctx.raw != null ? (ctx.raw * 10000).toLocaleString() + '원' : '-')
         }}
       }}
     }},
@@ -682,7 +682,7 @@ new Chart(document.getElementById('mainChart'), {{
     responsive:true, maintainAspectRatio:false,
     plugins:{{
       legend:{{labels:{{color:'#64748b',font:{{size:11}},boxWidth:10}}}},
-      tooltip:{{callbacks:{{label:c=>' '+c.dataset.label+': '+Math.abs(c.raw/10000).toFixed(0)+'만'}}}}
+      tooltip:{{callbacks:{{label:c=>' '+c.dataset.label+': '+Math.abs(c.raw).toLocaleString()+'원'}}}}
     }},
     scales:{{
       x:{{stacked:true,grid:{{display:false}},ticks:{{color:'#94a3b8'}},border:{{display:false}}}},
