@@ -285,8 +285,8 @@ tbody td{{padding:8px 10px}}
 
 <!-- 탭 -->
 <div class="tab-bar">
-  <button class="tab-btn active" id="tab-f1" onclick="switchTab('f1')">{tag_f1} 예상</button>
-  <button class="tab-btn" id="tab-f2" onclick="switchTab('f2')">{tag_f2} 예상</button>
+  <button class="tab-btn active" id="tab-f1" onclick="switchTab('f1')">{tag_f1}</button>
+  <button class="tab-btn" id="tab-f2" onclick="switchTab('f2')">{tag_f2}</button>
 </div>
 
 <!-- KPI — f1 -->
@@ -526,14 +526,17 @@ function doSearch() {{
   const q = document.getElementById('search-input').value.trim();
   if (!q) return;
 
-  // 데이터 소스 결정
+  // 데이터 소스 결정 — 월 키워드 없으면 현재 탭 기준
   let data, srcLabel;
   if (q.includes('전월') || q.includes('5월') || q.includes('지난달')) {{
     data = PREV_DATA; srcLabel = '전월(5월) ';
   }} else if (q.includes('이달') || q.includes('6월') || q.includes('이번달')) {{
     data = THIS_DATA; srcLabel = '이달(6월) ';
+  }} else if (currentTab === 'f1') {{
+    data = THIS_DATA; srcLabel = '6월 ';
   }} else {{
-    data = [...PREV_DATA, ...THIS_DATA]; srcLabel = '';
+    // f2(7월)는 실데이터 없음 — 전월(5월) 기준 표시
+    data = PREV_DATA; srcLabel = '7월 예상 근거(전월 5월) ';
   }}
 
   // 필터 결정
