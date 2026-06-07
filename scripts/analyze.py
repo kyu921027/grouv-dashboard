@@ -43,9 +43,30 @@ def analyze(tickets):
             r['revenue'][key] += amt
     return r
 
-prev   = analyze(load_tickets('/tmp/prev_tickets.json'))
-pp     = analyze(load_tickets('/tmp/pp_tickets.json'))
-this_m = analyze(load_tickets('/tmp/this_tickets.json'))
+def slim_tickets(path):
+    result = []
+    for t in load_tickets(path):
+        cat = (t.get('expenseCategory') or {}).get('name', '미분류')
+        if '단순이체' in cat: continue
+        result.append({
+            'd': t.get('transactAt', t.get('date',''))[:10],
+            'a': t.get('amount', 0),
+            'tx': t.get('transactionType',''),
+            'cat': cat,
+            'memo': t.get('content', t.get('description',''))[:40]
+        })
+    return result
+
+prev_raw   = load_tickets('/tmp/prev_tickets.json')
+pp_raw     = load_tickets('/tmp/pp_tickets.json')
+this_raw   = load_tickets('/tmp/this_tickets.json')
+
+prev   = analyze(prev_raw)
+pp     = analyze(pp_raw)
+this_m = analyze(this_raw)
+
+prev_slim_js = json.dumps(slim_tickets('/tmp/prev_tickets.json'), ensure_ascii=False)
+this_slim_js = json.dumps(slim_tickets('/tmp/this_tickets.json'), ensure_ascii=False)
 
 def bank_from_name(name):
     if '우리' in name or 'CUBE' in name.upper(): return '우리은행'
@@ -183,6 +204,24 @@ tbody td{{padding:8px 10px}}
 .out{{color:#ef4444;font-weight:600;text-align:right}}
 .ttl{{background:#f8fafc;font-weight:700}}
 
+/* 검색 바 */
+.search-wrap{{margin-bottom:14px}}
+.search-bar{{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid #e2e8f0;
+             border-radius:16px;padding:10px 16px;box-shadow:0 1px 3px rgba(0,0,0,.05);transition:.15s}}
+.search-bar:focus-within{{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1)}}
+.search-bar input{{flex:1;border:none;outline:none;font-size:14px;color:#0f172a;background:transparent}}
+.search-bar input::placeholder{{color:#94a3b8}}
+.search-btn{{padding:7px 18px;background:#0f172a;color:#fff;border:none;border-radius:10px;
+             font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:.15s}}
+.search-btn:hover{{background:#1e293b}}
+.search-result{{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:20px 24px;
+                margin-top:10px;box-shadow:0 1px 3px rgba(0,0,0,.05)}}
+.result-title{{font-size:13px;font-weight:700;margin-bottom:12px;display:flex;
+               justify-content:space-between;align-items:center}}
+.result-total{{font-size:12px;font-weight:600;padding:3px 10px;border-radius:8px;background:#f1f5f9}}
+.tag-hint{{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;
+           background:#eff6ff;color:#2563eb;margin-left:6px;cursor:pointer}}
+
 /* 탭 버튼 */
 .tab-bar{{display:flex;gap:8px;margin-bottom:16px}}
 .tab-btn{{padding:8px 20px;border-radius:24px;border:1.5px solid #e2e8f0;background:#fff;
@@ -223,6 +262,24 @@ tbody td{{padding:8px 10px}}
   <div style="text-align:right">
     <div style="font-size:11px;color:#94a3b8;margin-bottom:2px">현재 잔액</div>
     <div style="font-size:22px;font-weight:800;color:#2563eb">{fmt(total_balance)}</div>
+  </div>
+</div>
+
+<!-- 검색 바 -->
+<div class="search-wrap">
+  <div class="search-bar">
+    <span style="font-size:16px;color:#94a3b8">🔍</span>
+    <input type="text" id="search-input"
+      placeholder="예) 상품매출 상세내역 보여줘 / 고정지출 월 상세내역 / 이달 변동지출"
+      onkeydown="if(event.key==='Enter') doSearch()" />
+    <button class="search-btn" onclick="doSearch()">검색</button>
+  </div>
+  <div class="search-result" id="search-result" style="display:none">
+    <div class="result-title">
+      <span id="result-label">검색 결과</span>
+      <span class="result-total" id="result-total"></span>
+    </div>
+    <div id="result-body"></div>
   </div>
 </div>
 
@@ -451,8 +508,119 @@ const DATA = {{
 const FIXED_ITEMS = {fixed_js};
 let currentTab = 'f1';
 
+// 검색용 거래 데이터
+const PREV_DATA = {prev_slim_js};
+const THIS_DATA = {this_slim_js};
+const FIXED_CAT_SET = new Set({json.dumps(list(FIXED_CATS), ensure_ascii=False)});
+
 function fmt(v) {{
   return Math.round(v/10000).toLocaleString() + '만';
+}}
+
+function fmtAmt(v) {{
+  return v.toLocaleString() + '원';
+}}
+
+// 검색 실행
+function doSearch() {{
+  const q = document.getElementById('search-input').value.trim();
+  if (!q) return;
+
+  // 데이터 소스 결정
+  let data, srcLabel;
+  if (q.includes('전월') || q.includes('5월') || q.includes('지난달')) {{
+    data = PREV_DATA; srcLabel = '전월(5월) ';
+  }} else if (q.includes('이달') || q.includes('6월') || q.includes('이번달')) {{
+    data = THIS_DATA; srcLabel = '이달(6월) ';
+  }} else {{
+    data = [...PREV_DATA, ...THIS_DATA]; srcLabel = '';
+  }}
+
+  // 필터 결정
+  let filtered = data;
+  let label = srcLabel;
+
+  // 매출 카테고리
+  const revCats = ['상품매출','서비스매출','온라인 매출'];
+  const matchedRevCat = revCats.find(c => q.includes(c));
+  if (matchedRevCat) {{
+    filtered = data.filter(t => t.tx === 'IN' && t.cat === matchedRevCat);
+    label += matchedRevCat + ' 상세내역';
+  }} else if (q.includes('매출')) {{
+    filtered = data.filter(t => t.tx === 'IN');
+    label += '매출 전체 내역';
+  // 지출 카테고리
+  }} else if ((q.includes('고정') || q.includes('Fixed')) && (q.includes('지출') || q.includes('비용'))) {{
+    filtered = data.filter(t => t.tx === 'OUT' && FIXED_CAT_SET.has(t.cat));
+    label += '고정지출 상세내역';
+  }} else if ((q.includes('변동') || q.includes('variable')) && (q.includes('지출') || q.includes('비용'))) {{
+    filtered = data.filter(t => t.tx === 'OUT' && !FIXED_CAT_SET.has(t.cat));
+    label += '변동지출 상세내역';
+  }} else if (q.includes('지출') || q.includes('비용')) {{
+    filtered = data.filter(t => t.tx === 'OUT');
+    label += '지출 전체 내역';
+  }} else {{
+    // 카테고리명 포함 여부로 검색
+    const allCats = [...new Set(data.map(t => t.cat))];
+    const matchedCat = allCats.find(c => q.includes(c) || c.includes(q.replace(/\\s*(보여줘|상세|내역|조회).*/,'').trim()));
+    if (matchedCat) {{
+      filtered = data.filter(t => t.cat === matchedCat);
+      label += matchedCat + ' 내역';
+    }} else {{
+      // 메모/거래처 검색
+      const kw = q.replace(/\\s*(보여줘|상세|내역|조회|알려줘).*/,'').trim();
+      filtered = data.filter(t => t.cat.includes(kw) || t.memo.includes(kw));
+      label += '"' + kw + '" 검색 결과';
+    }}
+  }}
+
+  renderResults(label, filtered);
+}}
+
+function renderResults(label, rows) {{
+  const panel = document.getElementById('search-result');
+  panel.style.display = 'block';
+  document.getElementById('result-label').textContent = label || '검색 결과';
+
+  // 합계 계산
+  const totalIn  = rows.filter(r=>r.tx==='IN').reduce((s,r)=>s+r.a, 0);
+  const totalOut = rows.filter(r=>r.tx==='OUT').reduce((s,r)=>s+r.a, 0);
+  const net = totalIn - totalOut;
+  const totalEl = document.getElementById('result-total');
+  if (totalIn > 0 && totalOut > 0) {{
+    totalEl.textContent = '합계: 수입 ' + fmt(totalIn) + ' / 지출 ' + fmt(totalOut);
+  }} else if (totalIn > 0) {{
+    totalEl.textContent = '합계: ' + fmt(totalIn);
+    totalEl.style.color = '#2563eb';
+  }} else {{
+    totalEl.textContent = '합계: ' + fmt(totalOut);
+    totalEl.style.color = '#ef4444';
+  }}
+
+  if (rows.length === 0) {{
+    document.getElementById('result-body').innerHTML =
+      '<div style="text-align:center;color:#94a3b8;padding:20px">해당하는 내역이 없습니다.</div>';
+    return;
+  }}
+
+  // 테이블 렌더
+  let html = '<table><thead><tr><th>날짜</th><th>카테고리</th><th>거래처/내용</th>'
+           + '<th style="text-align:right">금액</th></tr></thead><tbody>';
+  const sorted = [...rows].sort((a,b) => b.d.localeCompare(a.d));
+  for (const r of sorted) {{
+    const isIn = r.tx === 'IN';
+    const amtStyle = isIn ? 'color:#2563eb;font-weight:600;text-align:right'
+                           : 'color:#ef4444;font-weight:600;text-align:right';
+    const prefix = isIn ? '+' : '-';
+    html += '<tr>'
+          + '<td style="color:#64748b;white-space:nowrap">' + r.d + '</td>'
+          + '<td><span style="background:#f1f5f9;padding:2px 8px;border-radius:6px;font-size:11px">' + r.cat + '</span></td>'
+          + '<td style="color:#475569;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (r.memo||'-') + '</td>'
+          + '<td style="' + amtStyle + '">' + prefix + fmtAmt(r.a) + '</td>'
+          + '</tr>';
+  }}
+  html += '</tbody></table>';
+  document.getElementById('result-body').innerHTML = html;
 }}
 
 // 탭 전환
