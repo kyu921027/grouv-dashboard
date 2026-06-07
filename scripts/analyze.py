@@ -138,13 +138,16 @@ for sched_day, _, sched_amt in FIXED_SCHEDULE:
     if sched_day <= days_in_month:
         fixed_by_day[sched_day] += sched_amt
 
+# 예상: 매출·변동 균등, 고정은 FIXED_SCHEDULE 납부일 + 나머지(급여 등) 균등분배
 daily_rev_fc = f1_tr / days_in_month if days_in_month else 0
 daily_var_fc = f1['variable'] / days_in_month if days_in_month else 0
+# FIXED_SCHEDULE에 없는 고정지출(직원급여 등)을 균등 분배
+remaining_fixed_daily = max(0, f1['fixed'] - total_fixed_sched) / days_in_month if days_in_month else 0
 
 forecast_bal = []
 running_fc = start_bal
 for d in range(1, days_in_month + 1):
-    daily_net_fc = daily_rev_fc - daily_var_fc - fixed_by_day[d]
+    daily_net_fc = daily_rev_fc - daily_var_fc - remaining_fixed_daily - fixed_by_day[d]
     running_fc  += daily_net_fc
     forecast_bal.append(round(running_fc / 10000, 1))
 
