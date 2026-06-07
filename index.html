@@ -173,6 +173,38 @@ tbody td{padding:8px 10px}
   </div>
 </div>
 
+<!-- 일별 가용 현금 흐름 -->
+<div class="card" style="margin-bottom:14px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+    <div>
+      <div class="stitle">6월 일별 가용 현금 흐름</div>
+      <div style="font-size:12px;color:#64748b;margin-top:2px">
+        좌(실선): 실제 · 우(점선): 예상 | 고정납부일 반영
+      </div>
+    </div>
+    <div style="display:flex;gap:20px;font-size:12px">
+      <div style="text-align:right">
+        <div style="color:#94a3b8;font-size:11px">오늘 실제 잔액</div>
+        <div style="font-weight:800;color:#2563eb">2,370만</div>
+      </div>
+      <div style="text-align:right">
+        <div style="color:#94a3b8;font-size:11px">월말 예상 잔액</div>
+        <div style="font-weight:800;color:#f97316">9,377만</div>
+      </div>
+    </div>
+  </div>
+  <div style="height:220px;position:relative"><canvas id="dailyCashChart"></canvas></div>
+  <div style="display:flex;gap:16px;margin-top:10px;font-size:11px;color:#64748b">
+    <div style="display:flex;align-items:center;gap:5px">
+      <div style="width:24px;height:2px;background:#2563eb;border-radius:2px"></div>실제 잔액 (1~7일)
+    </div>
+    <div style="display:flex;align-items:center;gap:5px">
+      <div style="width:24px;height:2px;background:#f97316;border-radius:2px;
+                  background:repeating-linear-gradient(90deg,#f97316 0,#f97316 4px,transparent 4px,transparent 8px)"></div>예상 잔액 (전월 기준)
+    </div>
+  </div>
+</div>
+
 <!-- 차트 + 지출 구성 -->
 <div class="grid g31" style="margin-bottom:14px">
   <div class="card">
@@ -358,6 +390,67 @@ function closePopup(type) {
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { closePopup('fixed'); closePopup('variable'); }
+});
+
+// 일별 현금 흐름 차트
+new Chart(document.getElementById('dailyCashChart'), {
+  type: 'line',
+  data: {
+    labels: ["1일","2일","3일","4일","5일","6일","7일","8일","9일","10일","11일","12일","13일","14일","15일","16일","17일","18일","19일","20일","21일","22일","23일","24일","25일","26일","27일","28일","29일","30일"],
+    datasets: [
+      {
+        label: '실제 잔액',
+        data: [5590.6,2778.5,2779.0,2801.1,2370.1,2370.1,2370.1,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+        borderColor: '#2563eb',
+        backgroundColor: 'rgba(37,99,235,0.08)',
+        fill: true,
+        tension: 0.35,
+        pointRadius: [2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        pointHoverRadius: 5,
+        borderWidth: 2.5,
+        spanGaps: false
+      },
+      {
+        label: '예상 잔액',
+        data: [5693.4,5848.0,6002.6,6157.1,6311.7,6444.3,6598.8,6753.4,6908.0,7062.5,6964.3,7118.9,7273.5,7428.0,7446.6,7601.2,7755.7,7910.3,8064.9,8219.4,8175.1,8329.7,8484.3,8638.8,8793.4,8758.9,8913.5,9068.1,9222.6,9377.2],
+        borderColor: '#f97316',
+        backgroundColor: 'rgba(249,115,22,0.05)',
+        fill: false,
+        tension: 0.35,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        borderWidth: 1.5,
+        borderDash: [6, 4]
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          title: ctx => ctx[0].label + ' 잔액',
+          label: ctx => ' ' + ctx.dataset.label + ': ' + (ctx.raw ?? '-') + '만'
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: { color: '#94a3b8', font: { size: 10 },
+                  callback: (v, i) => ((i+1) % 5 === 1 || i+1 === 7) ? (i+1)+'일' : '' },
+        border: { display: false }
+      },
+      y: {
+        grid: { color: '#f1f5f9' },
+        border: { display: false },
+        ticks: { color: '#94a3b8', callback: v => v + '만' }
+      }
+    }
+  }
 });
 
 // 차트 (이달 현재 + 6월 예상 + 7월 예상)
